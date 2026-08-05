@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+frontend/dist/
+
+# Runtime data (SQLite DB, config overrides) -- not source
+sensor-service/data/*.db
+sensor-service/data/*.db-journal
+sensor-service/data/*.db-wal
+sensor-service/data/*.db-shm
+backend/data/
+
+# Local env overrides
+deploy/.env

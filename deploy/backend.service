@@ -1,0 +1,20 @@
+[Unit]
+Description=Segarish Fisher Dashboard - backend
+After=network.target sensor-service.service
+Wants=network.target
+# Deliberately "Wants", not "Requires"/"BindsTo": the backend must keep
+# running and serving "stale" data even if sensor-service is down or
+# restarting -- see backend/app.py and README.md "Architecture".
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/segarish-fisher-dashboard/backend
+EnvironmentFile=-/home/pi/segarish-fisher-dashboard/deploy/.env
+ExecStart=/home/pi/segarish-fisher-dashboard/backend/.venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

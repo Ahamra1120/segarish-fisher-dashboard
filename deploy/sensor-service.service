@@ -1,0 +1,21 @@
+[Unit]
+Description=Segarish Fisher Dashboard - sensor-service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/segarish-fisher-dashboard/sensor-service
+EnvironmentFile=-/home/pi/segarish-fisher-dashboard/deploy/.env
+# --system-site-packages venv so this sees the apt-installed picamera2 /
+# libcamera bindings -- see README.md "Raspberry Pi bring-up".
+ExecStart=/home/pi/segarish-fisher-dashboard/sensor-service/.venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port 8100
+Restart=on-failure
+RestartSec=3
+# SPI/I2C/serial/camera device access.
+SupplementaryGroups=spi i2c dialout video gpio
+
+[Install]
+WantedBy=multi-user.target

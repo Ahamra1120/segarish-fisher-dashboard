@@ -1,0 +1,18 @@
+# Core service (works on any OS, incl. Windows dev in simulate mode)
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+Pillow==11.1.0
+
+# --- Raspberry Pi hardware drivers -----------------------------------
+# Installed by deploy setup on the Pi; NOT required for simulate-mode
+# dev on a non-Pi machine (imports are guarded with try/except in each
+# driver, so the app runs fine without these installed).
+#
+# spidev            # MQ135 via MCP3008 (SPI ADC)
+# RPi.GPIO          # HX711 load cell bit-bang
+# pyserial          # GPS UART
+# pynmea2           # GPS NMEA sentence parsing
+#
+# picamera2 is NOT pip-installable — it wraps libcamera and must come
+# from `sudo apt install -y python3-picamera2` on Raspberry Pi OS; create
+# the venv with --system-site-packages so it's importable. See README.md.

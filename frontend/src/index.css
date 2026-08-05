@@ -1,0 +1,506 @@
+/* Design tokens ported from segarish/src/index.css for visual-identity
+   consistency (brand cyan/teal, card system) -- see plan/README for why
+   this project doesn't import segarish directly (separate deployable).
+
+   Two deliberate departures from segarish:
+   1. System font stack, not Google Fonts -- this page renders with zero
+      internet access on the Pi.
+   2. Status colors (good/warning/serious/critical) use the dataviz
+      skill's validated, colorblind-checked status palette instead of
+      segarish's --ok/--warn/--danger, since this dashboard's gas-quality
+      indicator is a real safety-relevant status signal. Dark mode is
+      a deliberate addition (not in segarish) since a boat dashboard
+      needs to read at night. */
+:root {
+  color-scheme: light;
+  --bg-0: #eef2f7;
+  --bg-1: #ffffff;
+  --bg-2: #f1f5f9;
+  --bg-3: #e2e8f0;
+  --surface: #ffffff;
+  --border: rgba(15, 23, 42, 0.09);
+  --border-strong: rgba(15, 23, 42, 0.17);
+
+  --text-0: #0f172a;
+  --text-1: #475569;
+  --text-2: #8a99b3;
+
+  --brand: #0891b2;
+  --brand-2: #0d9488;
+  --accent: #6366f1;
+
+  /* Status palette (validated, colorblind-checked -- see dataviz skill
+     references/palette.md). Fixed regardless of theme; never repurposed
+     for non-status use. */
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  --shadow: 0 16px 36px -24px rgba(15, 23, 42, 0.28);
+  --radius: 16px;
+  --radius-sm: 10px;
+
+  /* System sans/mono only -- no CDN fonts, this page must work fully offline. */
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme='light'])) {
+    color-scheme: dark;
+    --bg-0: #0d0d0d;
+    --bg-1: #16191c;
+    --bg-2: #1a1e22;
+    --bg-3: #232830;
+    --surface: #16191c;
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.18);
+
+    --text-0: #f2f5f8;
+    --text-1: #b7c2cf;
+    --text-2: #7c8a99;
+
+    --brand: #22d3ee;
+    --brand-2: #2dd4bf;
+    --accent: #9085e9;
+
+    --status-good: #0ca30c;
+    --status-warning: #fab219;
+    --status-serious: #ec835a;
+    --status-critical: #e66767;
+
+    --shadow: 0 16px 36px -24px rgba(0, 0, 0, 0.6);
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-0: #0d0d0d;
+  --bg-1: #16191c;
+  --bg-2: #1a1e22;
+  --bg-3: #232830;
+  --surface: #16191c;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text-0: #f2f5f8;
+  --text-1: #b7c2cf;
+  --text-2: #7c8a99;
+  --brand: #22d3ee;
+  --brand-2: #2dd4bf;
+  --accent: #9085e9;
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #e66767;
+  --shadow: 0 16px 36px -24px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  /* Touchscreen kiosk: no accidental text selection / long-press menus. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg-0);
+  color: var(--text-0);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  overflow: hidden; /* kiosk: never scroll the page itself */
+}
+
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===================== Kiosk shell ===================== */
+.kiosk {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 10px;
+}
+
+.kiosk-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  flex: 0 0 auto;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(45, 212, 191, 0.15));
+  border: 1px solid var(--border-strong);
+  color: var(--brand);
+}
+.brand-name {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+.brand-sub {
+  font-size: 10px;
+  color: var(--text-2);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.kiosk-header-spacer {
+  flex: 1;
+}
+
+.conn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+}
+.conn-badge .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 99px;
+  background: currentColor;
+}
+.conn-badge.live {
+  color: var(--status-good);
+  background: color-mix(in srgb, var(--status-good) 14%, transparent);
+  border-color: color-mix(in srgb, var(--status-good) 35%, transparent);
+}
+.conn-badge.live .dot {
+  animation: pulse 1.6s infinite;
+}
+.conn-badge.stale {
+  color: var(--status-warning);
+  background: color-mix(in srgb, var(--status-warning) 16%, transparent);
+  border-color: color-mix(in srgb, var(--status-warning) 40%, transparent);
+}
+.conn-badge.offline {
+  color: var(--status-critical);
+  background: color-mix(in srgb, var(--status-critical) 14%, transparent);
+  border-color: color-mix(in srgb, var(--status-critical) 35%, transparent);
+}
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.78);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.clock {
+  text-align: right;
+  line-height: 1.15;
+}
+.clock .time {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
+  font-weight: 700;
+}
+.clock .date {
+  font-size: 10px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ===================== Panel grid ===================== */
+.kiosk-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.panel-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.panel-title {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.panel-sub {
+  font-size: 10.5px;
+  color: var(--text-2);
+}
+.panel-head-spacer {
+  flex: 1;
+}
+
+.panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+/* ===================== Status badge (chip) ===================== */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+}
+.status-chip.good {
+  color: var(--status-good);
+  background: color-mix(in srgb, var(--status-good) 14%, transparent);
+  border-color: color-mix(in srgb, var(--status-good) 35%, transparent);
+}
+.status-chip.warning {
+  color: var(--status-warning);
+  background: color-mix(in srgb, var(--status-warning) 18%, transparent);
+  border-color: color-mix(in srgb, var(--status-warning) 42%, transparent);
+}
+.status-chip.serious,
+.status-chip.critical {
+  color: var(--status-critical);
+  background: color-mix(in srgb, var(--status-critical) 14%, transparent);
+  border-color: color-mix(in srgb, var(--status-critical) 35%, transparent);
+}
+.status-chip.neutral {
+  color: var(--text-1);
+  background: var(--bg-3);
+  border-color: var(--border);
+}
+
+/* ===================== Hero figure ===================== */
+.hero-num {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  /* proportional figures on the hero number, per dataviz skill guidance --
+     tabular-nums is reserved for aligned columns, not display numbers. */
+}
+.hero-num small {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-left: 3px;
+}
+.hero-label {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+/* ===================== Meter (same-ramp radial track) ===================== */
+.meter-wrap {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.meter-center {
+  position: absolute;
+  text-align: center;
+}
+.meter-center .v {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+.meter-center .u {
+  font-size: 9.5px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 1px;
+}
+
+/* ===================== Sparkline block ===================== */
+.spark-block {
+  margin-top: auto;
+  padding-top: 8px;
+}
+.spark-block .sb-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-2);
+  margin-bottom: 3px;
+}
+
+/* ===================== GPS panel ===================== */
+.gps-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.gps-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+}
+.gps-row .k {
+  color: var(--text-2);
+}
+.gps-row .v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.heading-note {
+  font-size: 9.5px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+/* ===================== Camera panel ===================== */
+.camera-frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.camera-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.camera-frame .cam-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+.camera-frame .cam-empty {
+  color: var(--text-2);
+  font-size: 12px;
+  text-align: center;
+  padding: 12px;
+}
+
+/* ===================== Buttons ===================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-2);
+  color: var(--text-0);
+  cursor: pointer;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn.primary {
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  color: #04121a;
+  border-color: transparent;
+}
+
+.muted {
+  color: var(--text-2);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.between {
+  justify-content: space-between;
+}
+
+/* Small screens (dev browser narrower than the kiosk's 800px) stack
+   panels instead of clipping them. */
+@media (max-width: 720px) {
+  .kiosk-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, minmax(180px, 1fr));
+    overflow-y: auto;
+  }
+  body {
+    overflow: auto;
+  }
+}

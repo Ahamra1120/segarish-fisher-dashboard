@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Name=Segarish Fisher Dashboard Kiosk
+Comment=Launches the fisher dashboard in Chromium kiosk mode on boot
+Exec=/home/pi/segarish-fisher-dashboard/deploy/kiosk.sh
+X-GNOME-Autostart-enabled=true
+NoDisplay=false
+Terminal=false
+
+; Install: copy (or symlink) to ~/.config/autostart/segarish-kiosk.desktop
+; on the account that auto-logs into the desktop session. Works under the
+; XDG autostart spec, which covers LXDE/X11 Pi OS setups and most
+; Wayland compositors' autostart support. If your Pi OS image's default
+; compositor (labwc, on current Raspberry Pi OS Bookworm) doesn't pick
+; this up, add instead to ~/.config/labwc/autostart:
+;   /home/pi/segarish-fisher-dashboard/deploy/kiosk.sh &
+; See README.md "Raspberry Pi bring-up" for the full walkthrough.

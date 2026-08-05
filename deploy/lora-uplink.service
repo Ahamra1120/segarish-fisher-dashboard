@@ -1,0 +1,22 @@
+[Unit]
+Description=Segarish Fisher Dashboard - lora-uplink
+After=network.target sensor-service.service
+Wants=network.target
+# Also "Wants" not "Requires": lora-uplink only reads/writes the shared
+# SQLite uplink_queue table, so it degrades independently of
+# sensor-service -- it just finds nothing new to send if that table
+# stops growing.
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/segarish-fisher-dashboard/lora-uplink
+EnvironmentFile=-/home/pi/segarish-fisher-dashboard/deploy/.env
+ExecStart=/home/pi/segarish-fisher-dashboard/lora-uplink/.venv/bin/python app.py
+Restart=on-failure
+RestartSec=5
+SupplementaryGroups=spi gpio
+
+[Install]
+WantedBy=multi-user.target
