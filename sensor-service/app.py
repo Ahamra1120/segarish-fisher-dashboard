@@ -9,13 +9,16 @@ import logging
 import threading
 import time
 from dataclasses import asdict
+from typing import Optional
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, Response, StreamingResponse
+from pydantic import BaseModel
 
 import config
 import storage
 from drivers import simulate
+from drivers.base import GasReading, GpsReading, LoadReading
 from drivers.camera import CameraDriver
 from drivers.gps import GpsDriver
 from drivers.loadcell import HX711Driver
@@ -34,6 +37,9 @@ def _pick(real_cls, sim_cls, name):
     if config.SENSOR_MODE == "simulate":
         log.info("%s: SENSOR_MODE=simulate -> using simulated driver", name)
         return sim_cls(config)
+    if config.SENSOR_MODE == "manual":
+        log.info("%s: SENSOR_MODE=manual -> no driver, waiting for POST /manual", name)
+        return _UnavailableDriver()
     try:
         drv = real_cls(config)
     except Exception as e:  # noqa: BLE001
@@ -176,14 +182,19 @@ def housekeeping_loop():
             log.exception("housekeeping_loop error")
 
 
-_threads = [
-    threading.Thread(target=gas_loop, daemon=True, name="gas_loop"),
-    threading.Thread(target=load_loop, daemon=True, name="load_loop"),
-    threading.Thread(target=gps_loop, daemon=True, name="gps_loop"),
-    threading.Thread(target=camera_loop, daemon=True, name="camera_loop"),
-    threading.Thread(target=uplink_sampler_loop, daemon=True, name="uplink_sampler_loop"),
-    threading.Thread(target=housekeeping_loop, daemon=True, name="housekeeping_loop"),
-]
+# SENSOR_MODE=manual runs with no pollers at all -- state only changes
+# when POST /manual is called, so gas/load/gps/camera/uplink-sampler loops
+# would just spin reading from _UnavailableDriver stubs for nothing.
+# housekeeping still runs (harmless, keeps history pruned regardless).
+_threads = [threading.Thread(target=housekeeping_loop, daemon=True, name="housekeeping_loop")]
+if config.SENSOR_MODE != "manual":
+    _threads += [
+        threading.Thread(target=gas_loop, daemon=True, name="gas_loop"),
+        threading.Thread(target=load_loop, daemon=True, name="load_loop"),
+        threading.Thread(target=gps_loop, daemon=True, name="gps_loop"),
+        threading.Thread(target=camera_loop, daemon=True, name="camera_loop"),
+        threading.Thread(target=uplink_sampler_loop, daemon=True, name="uplink_sampler_loop"),
+    ]
 for t in _threads:
     t.start()
 
@@ -260,3 +271,92 @@ def tare():
         return JSONResponse({"ok": False, "reason": "driver has no tare()"}, status_code=400)
     offset = load_driver.tare()
     return {"ok": True, "offset": offset}
+
+
+# --- manual input (SENSOR_MODE=manual) ------------------------------------
+# Same field names/units as the compact LoRa uplink payload (see README
+# "LoRa uplink" and "Manual input") -- what you POST here is, verbatim,
+# what gets queued for lora-uplink to send. Every field is optional so a
+# single POST can update just gas, just the load cell, just GPS, or all
+# three; at least one sensor's worth of data is required.
+class ManualReading(BaseModel):
+    id: Optional[str] = None
+    seq: Optional[int] = None
+    ts: Optional[int] = None
+    gas: Optional[float] = None
+    gaslvl: Optional[str] = None
+    w: Optional[float] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    hdg: Optional[float] = None
+    spd: Optional[float] = None
+    fix: Optional[bool] = None
+    sat: Optional[int] = None
+
+
+@app.post("/manual")
+def manual_ingest(reading: ManualReading):
+    if config.SENSOR_MODE != "manual":
+        return JSONResponse(
+            {
+                "ok": False,
+                "error": "SENSOR_MODE is not 'manual' -- set SENSOR_MODE=manual and "
+                "restart sensor-service to accept POST /manual instead of simulate/hardware readings.",
+            },
+            status_code=409,
+        )
+
+    now = time.time()
+    ts = float(reading.ts) if reading.ts is not None else now
+
+    gas_r = load_r = gps_r = None
+
+    if reading.gas is not None or reading.gaslvl is not None:
+        gas_r = GasReading(ts=ts, raw_adc=None, voltage=None, rs_ratio=None, ppm_est=reading.gas, level=reading.gaslvl or "unknown")
+        with _lock:
+            _state["gas"] = gas_r
+        storage.insert_gas(gas_r)
+
+    if reading.w is not None:
+        load_r = LoadReading(ts=ts, raw=None, kg=reading.w, tared=True)
+        with _lock:
+            _state["load"] = load_r
+        storage.insert_load(load_r)
+
+    if reading.fix is not None or any(v is not None for v in (reading.lat, reading.lon, reading.hdg, reading.spd, reading.sat)):
+        gps_r = GpsReading(
+            ts=ts, fix=bool(reading.fix), lat=reading.lat, lon=reading.lon, alt_m=None,
+            speed_kn=reading.spd, heading_deg=reading.hdg, heading_source="manual",
+            satellites=reading.sat, hdop=None,
+        )
+        with _lock:
+            _state["gps"] = gps_r
+        storage.insert_gps(gps_r)
+
+    if gas_r is None and load_r is None and gps_r is None:
+        return JSONResponse(
+            {"ok": False, "error": "empty reading -- provide at least one of gas/gaslvl, w, or lat/lon/hdg/spd/fix/sat"},
+            status_code=400,
+        )
+
+    seq = reading.seq if reading.seq is not None else _next_seq()
+    payload = {
+        "id": reading.id or config.NODE_ID,
+        "seq": seq,
+        "ts": int(ts),
+        "gas": gas_r.ppm_est if gas_r else None,
+        "gaslvl": gas_r.level if gas_r else None,
+        "w": load_r.kg if load_r else None,
+        "lat": round(gps_r.lat, 5) if gps_r and gps_r.lat is not None else None,
+        "lon": round(gps_r.lon, 5) if gps_r and gps_r.lon is not None else None,
+        "hdg": round(gps_r.heading_deg, 1) if gps_r and gps_r.heading_deg is not None else None,
+        "spd": round(gps_r.speed_kn, 1) if gps_r and gps_r.speed_kn is not None else None,
+        "fix": bool(gps_r.fix) if gps_r else False,
+        "sat": gps_r.satellites if gps_r else None,
+    }
+    # Queued directly, right now -- unlike simulate/hardware mode (which
+    # samples _state on a timer via uplink_sampler_loop), a manual POST
+    # *is* the snapshot to send, so it goes straight into uplink_queue for
+    # lora-uplink to pick up FIFO.
+    storage.insert_uplink_row(now, seq, json.dumps(payload, separators=(",", ":")))
+    return {"ok": True, "queued_for_lora": payload}

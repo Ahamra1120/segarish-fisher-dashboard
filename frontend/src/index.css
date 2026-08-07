@@ -153,56 +153,6 @@ body {
   flex: 1;
 }
 
-.conn-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 5px 11px;
-  border-radius: 99px;
-  border: 1px solid transparent;
-}
-.conn-badge .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 99px;
-  background: currentColor;
-}
-.conn-badge.live {
-  color: var(--status-good);
-  background: color-mix(in srgb, var(--status-good) 14%, transparent);
-  border-color: color-mix(in srgb, var(--status-good) 35%, transparent);
-}
-.conn-badge.live .dot {
-  animation: pulse 1.6s infinite;
-}
-.conn-badge.stale {
-  color: var(--status-warning);
-  background: color-mix(in srgb, var(--status-warning) 16%, transparent);
-  border-color: color-mix(in srgb, var(--status-warning) 40%, transparent);
-}
-.conn-badge.offline {
-  color: var(--status-critical);
-  background: color-mix(in srgb, var(--status-critical) 14%, transparent);
-  border-color: color-mix(in srgb, var(--status-critical) 35%, transparent);
-}
-@keyframes pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.35;
-    transform: scale(0.78);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 .clock {
   text-align: right;
   line-height: 1.15;
@@ -269,212 +219,74 @@ body {
   font-size: 10.5px;
   color: var(--text-2);
 }
-.panel-head-spacer {
-  flex: 1;
-}
-
-.panel-body {
+/* ===================== Stat readout (numbers only, no gauges/graphs) ===================== */
+/* Vertically centers whatever's inside (a hero number, a row list, or
+   both) in the panel's remaining space below the header -- this is what
+   keeps every panel's content centered regardless of how few/many rows
+   it has. */
+.stat-body {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: 6px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
 }
 
-/* ===================== Status badge (chip) ===================== */
-.status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 3px 9px;
-  border-radius: 99px;
-  border: 1px solid transparent;
+.stat-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
-.status-chip.good {
-  color: var(--status-good);
-  background: color-mix(in srgb, var(--status-good) 14%, transparent);
-  border-color: color-mix(in srgb, var(--status-good) 35%, transparent);
-}
-.status-chip.warning {
-  color: var(--status-warning);
-  background: color-mix(in srgb, var(--status-warning) 18%, transparent);
-  border-color: color-mix(in srgb, var(--status-warning) 42%, transparent);
-}
-.status-chip.serious,
-.status-chip.critical {
-  color: var(--status-critical);
-  background: color-mix(in srgb, var(--status-critical) 14%, transparent);
-  border-color: color-mix(in srgb, var(--status-critical) 35%, transparent);
-}
-.status-chip.neutral {
-  color: var(--text-1);
-  background: var(--bg-3);
-  border-color: var(--border);
-}
-
-/* ===================== Hero figure ===================== */
-.hero-num {
-  font-size: 34px;
+.stat-main .stat-num {
+  font-size: 52px;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
-  /* proportional figures on the hero number, per dataviz skill guidance --
-     tabular-nums is reserved for aligned columns, not display numbers. */
+  font-variant-numeric: tabular-nums;
 }
-.hero-num small {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-2);
-  margin-left: 3px;
-}
-.hero-label {
-  font-size: 11px;
-  color: var(--text-2);
-  margin-top: 2px;
-}
-
-/* ===================== Meter (same-ramp radial track) ===================== */
-.meter-wrap {
-  position: relative;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-}
-.meter-center {
-  /* Anchored with inset:0 + flex centering, not bare `position:absolute`
-     -- with no inset the browser falls back to each element's own static
-     position, which reliably drifted off the ring's true center. */
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-.meter-center .v {
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1;
-}
-.meter-center .u {
-  font-size: 9.5px;
+.stat-main .stat-unit {
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text-2);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-top: 1px;
+  letter-spacing: 0.05em;
 }
 
-/* ===================== Sparkline block ===================== */
-.spark-block {
-  margin-top: auto;
-  padding-top: 8px;
-}
-.spark-block .sb-head {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: var(--text-2);
-  margin-bottom: 3px;
-}
-
-/* ===================== GPS panel ===================== */
-.gps-readout {
+.stat-rows {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
+  gap: 9px;
 }
-.gps-row {
+.stat-rows-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 28px;
+}
+.stat-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 12px;
+  gap: 10px;
+  font-size: 13px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--border);
 }
-.gps-row .k {
+.stat-rows:not(.stat-rows-grid) .stat-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.stat-row .k {
   color: var(--text-2);
 }
-.gps-row .v {
+.stat-row .v {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-.heading-note {
-  font-size: 9.5px;
-  color: var(--text-2);
-  margin-top: 2px;
-}
-
-/* ===================== Camera panel ===================== */
-.camera-frame {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  background: var(--bg-3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.camera-frame img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.camera-frame .cam-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-}
-.camera-frame .cam-empty {
-  color: var(--text-2);
-  font-size: 12px;
-  text-align: center;
-  padding: 12px;
-}
-
-/* ===================== Buttons ===================== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font);
-  font-size: 12px;
   font-weight: 700;
-  line-height: 1;
-  padding: 7px 12px;
-  border-radius: 9px;
-  border: 1px solid var(--border-strong);
-  background: var(--bg-2);
-  color: var(--text-0);
-  cursor: pointer;
-}
-.btn:active {
-  transform: scale(0.97);
-}
-.btn.primary {
-  background: linear-gradient(135deg, var(--brand), var(--brand-2));
-  color: #04121a;
-  border-color: transparent;
 }
 
-.muted {
-  color: var(--text-2);
-}
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.between {
-  justify-content: space-between;
+.panel-wide {
+  grid-column: 1 / -1;
 }
 
 /* Small screens (dev browser narrower than the kiosk's target size):

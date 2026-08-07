@@ -86,14 +86,53 @@ npm run build      # backend serves frontend/dist at http://localhost:8000
 # or: npm run dev   # Vite dev server on :5173, proxies /api and /ws to :8000
 ```
 
-Open `http://localhost:8000`. You should see live-updating panels within
-a couple of seconds; killing sensor-service should flip the header badge
-to "Terputus" (disconnected) while the panels keep showing last-known
-values instead of going blank.
+Open `http://localhost:8000`. You should see live-updating numbers within
+a couple of seconds; killing sensor-service leaves the panels showing
+last-known values (via the WS envelope's `stale`/`connected` flags)
+instead of going blank -- the UI itself is deliberately numbers-only, no
+connection/status chrome, so this only shows up as the numbers freezing.
 
 Force the LoRa retry path without hardware:
 `SIMULATE_FAIL_RATE=1.0 LORA_MODE=simulate python app.py` in `lora-uplink/`
 — rows will stay `pending` and keep retrying; drop the flag and they drain.
+
+## Manual input (skip the simulator)
+
+For testing with exact, reproducible numbers instead of the simulator's
+random walk, run sensor-service with `SENSOR_MODE=manual`:
+
+```bash
+cd sensor-service
+SENSOR_MODE=manual uvicorn app:app --port 8100
+```
+
+In this mode every driver is disabled (no gas/load/gps/camera polling,
+no background uplink sampling) — the *only* way state changes is
+`POST /manual` (proxied by backend as `POST /api/manual`), with a JSON
+body in the exact same compact shape documented in "LoRa uplink" below:
+
+```bash
+curl -X POST http://localhost:8000/api/manual \
+  -H "Content-Type: application/json" \
+  -d '{"gas": 386.4, "gaslvl": "baik", "w": 4.62, "lat": -5.98034, "lon": 106.75651, "hdg": 36.2, "spd": 3.8, "fix": true, "sat": 10}'
+```
+
+All fields are optional (send just `w` to update only the load reading,
+say) but at least one of gas/load/GPS must be present. `id`, `seq`, and
+`ts` are optional too — sensor-service fills in `NODE_ID`, the next
+sequence number, and "now" if you omit them. The response echoes exactly
+what got queued:
+
+```json
+{"ok": true, "queued_for_lora": {"id": "fisher-01", "seq": 1, "ts": 1893456000, "gas": 386.4, "gaslvl": "baik", "w": 4.62, "lat": -5.98034, "lon": 106.75651, "hdg": 36.2, "spd": 3.8, "fix": true, "sat": 10}}
+```
+
+Unlike simulate/hardware mode (where `uplink_sampler_loop` samples
+current state on a timer), a manual POST *is* the snapshot — it's
+written straight into `uplink_queue` for `lora-uplink` to drain FIFO,
+and updates `/latest` (so the dashboard's numbers and `/api/history`
+update) in the same call. `POST /load/tare` and the camera endpoints
+aren't meaningful in this mode (no driver backs them).
 
 ## Raspberry Pi bring-up
 
@@ -156,11 +195,13 @@ Force the LoRa retry path without hardware:
    file for the labwc/Wayland fallback if your Pi OS image doesn't honor
    XDG autostart.
 8. **Sanity-check each sensor** once running: `curl localhost:8100/health`
-   shows which drivers are real vs. simulated; `voltage` on the gas panel
-   should sit mid-range with the sensor warmed up; the load reading
-   should zero after tare; the GPS panel should get a fix outdoors within
-   a couple of minutes; the camera panel should show a real frame, not
-   the "SIMULATED CAMERA" placeholder.
+   shows which drivers are real vs. simulated; `Tegangan` (voltage) on the
+   gas panel should sit mid-range with the sensor warmed up; the load
+   reading should zero after tare; the GPS panel should get a fix
+   outdoors within a couple of minutes; `curl localhost:8100/camera/snapshot.jpg
+   -o test.jpg` should save a real frame, not the "SIMULATED CAMERA"
+   placeholder (the dashboard UI itself is numbers-only and doesn't show
+   the camera feed -- see "UI: numbers only" below).
 
 None of the hardware driver code (steps 1-4 above) has been run against
 real hardware by the author — it follows datasheet/library conventions
@@ -208,16 +249,33 @@ and local regulations before field use** — many hobbyist SX1276/RFM95
 boards are silkscreened 433/868/915 MHz, but the frequency is a
 software-tunable radio parameter, not fixed by the board.
 
+## UI: numbers only
+
+The dashboard is deliberately just the current reading for each sensor
+— no gauges, sparklines, camera feed, compass graphic, or connection
+status chip. `frontend/src/App.jsx` renders three panels (gas, load,
+GPS) built from a small `.stat-*` CSS vocabulary (`index.css`): one
+big hero number where there's a single obvious value (ppm, kg), plain
+label/value rows otherwise (voltage, GPS lat/lon/speed/heading/
+satellites/fix). The whole thing is sized as one centered, non-scrolling
+card (see `#root`/`.kiosk` in `index.css`) rather than stretched
+edge-to-edge, so it reads the same on the Pi's 800x480 kiosk screen and
+on a dev monitor. The camera and `/api/history` endpoints still exist
+on the backend/sensor-service for API/Postman use — they're just not
+wired into this UI.
+
 ## No CDN, no map tiles — why
 
 The sibling `segarish` project (a marketing/mock web platform) pulls
 fonts from Google Fonts and map tiles from a Leaflet/unpkg CDN. This
 project runs on a boat with no internet, so neither is an option: the
-frontend uses the system font stack, and GPS position is shown as
-numeric lat/lon + a custom SVG compass rose instead of a map with tile
-imagery. Visual identity (brand color, card system, status colors) is
-still ported from `segarish/src/index.css` and `ui.jsx` — see comments
-in `frontend/src/index.css` for the specifics.
+frontend uses Plus Jakarta Sans self-hosted via `@fontsource` (bundled
+into the build's own JS/CSS at `npm run build` time, not fetched from
+Google Fonts at runtime — see `frontend/src/main.jsx`), and GPS position
+is shown as plain numeric lat/lon/speed/heading instead of a map with
+tile imagery. Visual identity (brand color, card system, status colors)
+is still ported from `segarish/src/index.css` and `ui.jsx` — see
+comments in `frontend/src/index.css` for the specifics.
 
 ## Heading is GPS, not a compass
 

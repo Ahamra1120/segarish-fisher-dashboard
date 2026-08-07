@@ -140,6 +140,18 @@ async def tare():
         return JSONResponse({"ok": False, "error": str(e)}, status_code=502)
 
 
+@app.post("/api/manual")
+async def manual(payload: dict = Body(...)):
+    """Proxies to sensor-service's POST /manual (only accepted there when
+    SENSOR_MODE=manual) -- see sensor-service/app.py and README "Manual
+    input" for the JSON shape."""
+    try:
+        resp = await _client.post("/manual", json=payload)
+        return JSONResponse(resp.json(), status_code=resp.status_code)
+    except Exception as e:  # noqa: BLE001
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=502)
+
+
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket):
     await ws.accept()

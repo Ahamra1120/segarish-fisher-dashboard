@@ -29,6 +29,10 @@ def _env_float(name, default):
 # dev on a non-Pi machine, or a demo without hardware wired up).
 # "hardware": do not fall back — a driver failing to init leaves that
 # sensor reporting "unavailable" in /latest rather than switching to fake data.
+# "manual": no driver, no background polling at all -- the only way state
+# changes is POST /manual with a hand-built JSON reading (see README
+# "Manual input" section). For testing the LoRa/UI flow with exact,
+# reproducible numbers instead of the simulator's random walk.
 SENSOR_MODE = _env_str("SENSOR_MODE", "auto")
 
 NODE_ID = _env_str("NODE_ID", "fisher-01")
