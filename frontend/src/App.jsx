@@ -219,7 +219,7 @@ export default function App() {
             <div className="panel-head-spacer" />
             <StatusChip status={camFresh ? 'good' : 'neutral'}>{camFresh ? 'Live' : 'Tidak ada frame'}</StatusChip>
           </div>
-          <div className="panel-body" style={{ paddingTop: 0 }}>
+          <div className="panel-body" style={{ paddingTop: 0, alignItems: 'stretch' }}>
             <div className="camera-frame">
               {camSrc ? (
                 <img src={camSrc} alt="Cuplikan kamera" />

@@ -2,15 +2,18 @@
    consistency (brand cyan/teal, card system) -- see plan/README for why
    this project doesn't import segarish directly (separate deployable).
 
-   Two deliberate departures from segarish:
-   1. System font stack, not Google Fonts -- this page renders with zero
-      internet access on the Pi.
+   Deliberate departures from segarish:
+   1. Plus Jakarta Sans, self-hosted via @fontsource (bundled at build
+      time into the app's own JS/CSS, not fetched from Google Fonts) --
+      this page still has to render with zero internet access on the Pi.
+      See README "No CDN, no map tiles -- why".
    2. Status colors (good/warning/serious/critical) use the dataviz
       skill's validated, colorblind-checked status palette instead of
       segarish's --ok/--warn/--danger, since this dashboard's gas-quality
-      indicator is a real safety-relevant status signal. Dark mode is
-      a deliberate addition (not in segarish) since a boat dashboard
-      needs to read at night. */
+      indicator is a real safety-relevant status signal.
+   3. Light mode only, on purpose -- the kiosk sits behind glass on deck
+      in daylight, so a fixed light theme reads better than a
+      system-driven dark mode would. */
 :root {
   color-scheme: light;
   --bg-0: #eef2f7;
@@ -41,58 +44,10 @@
   --radius: 16px;
   --radius-sm: 10px;
 
-  /* System sans/mono only -- no CDN fonts, this page must work fully offline. */
-  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Plus Jakarta Sans (self-hosted, see header comment); system stack is
+     just the fallback while the webfont loads or if it's ever missing. */
+  --font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme='light'])) {
-    color-scheme: dark;
-    --bg-0: #0d0d0d;
-    --bg-1: #16191c;
-    --bg-2: #1a1e22;
-    --bg-3: #232830;
-    --surface: #16191c;
-    --border: rgba(255, 255, 255, 0.09);
-    --border-strong: rgba(255, 255, 255, 0.18);
-
-    --text-0: #f2f5f8;
-    --text-1: #b7c2cf;
-    --text-2: #7c8a99;
-
-    --brand: #22d3ee;
-    --brand-2: #2dd4bf;
-    --accent: #9085e9;
-
-    --status-good: #0ca30c;
-    --status-warning: #fab219;
-    --status-serious: #ec835a;
-    --status-critical: #e66767;
-
-    --shadow: 0 16px 36px -24px rgba(0, 0, 0, 0.6);
-  }
-}
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --bg-0: #0d0d0d;
-  --bg-1: #16191c;
-  --bg-2: #1a1e22;
-  --bg-3: #232830;
-  --surface: #16191c;
-  --border: rgba(255, 255, 255, 0.09);
-  --border-strong: rgba(255, 255, 255, 0.18);
-  --text-0: #f2f5f8;
-  --text-1: #b7c2cf;
-  --text-2: #7c8a99;
-  --brand: #22d3ee;
-  --brand-2: #2dd4bf;
-  --accent: #9085e9;
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-serious: #ec835a;
-  --status-critical: #e66767;
-  --shadow: 0 16px 36px -24px rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -120,7 +75,7 @@ body {
   color: var(--text-0);
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.01em;
-  overflow: hidden; /* kiosk: never scroll the page itself */
+  overflow: hidden; /* never scroll the page itself, at any viewport size */
 }
 
 .mono {
@@ -128,14 +83,30 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ===================== Stage ===================== */
+/* #root centers the dashboard as one self-contained card on the page --
+   on the Pi's 800x480 kiosk screen it fills almost edge-to-edge; on a
+   bigger dev monitor it stays a fixed, readable size instead of
+   stretching thin, so the layout is one deliberate area, not a sprawl. */
+#root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(8px, 2vh, 24px);
+}
+
 /* ===================== Kiosk shell ===================== */
 .kiosk {
-  height: 100vh;
-  width: 100vw;
+  width: min(1180px, 100%);
+  height: min(720px, 100%);
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 14px;
   gap: 10px;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
 }
 
 .kiosk-header {
@@ -188,6 +159,7 @@ body {
   gap: 6px;
   font-size: 12px;
   font-weight: 700;
+  line-height: 1;
   padding: 5px 11px;
   border-radius: 99px;
   border: 1px solid transparent;
@@ -252,10 +224,12 @@ body {
 .kiosk-grid {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   gap: 10px;
+  overflow: hidden;
 }
 
 .panel {
@@ -268,6 +242,7 @@ body {
   flex-direction: column;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
 }
 
 .panel-head {
@@ -314,6 +289,7 @@ body {
   gap: 5px;
   font-size: 11px;
   font-weight: 700;
+  line-height: 1;
   padding: 3px 9px;
   border-radius: 99px;
   border: 1px solid transparent;
@@ -369,7 +345,15 @@ body {
   place-items: center;
 }
 .meter-center {
+  /* Anchored with inset:0 + flex centering, not bare `position:absolute`
+     -- with no inset the browser falls back to each element's own static
+     position, which reliably drifted off the ring's true center. */
   position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 .meter-center .v {
@@ -464,6 +448,7 @@ body {
   font-family: var(--font);
   font-size: 12px;
   font-weight: 700;
+  line-height: 1;
   padding: 7px 12px;
   border-radius: 9px;
   border: 1px solid var(--border-strong);
@@ -492,15 +477,18 @@ body {
   justify-content: space-between;
 }
 
-/* Small screens (dev browser narrower than the kiosk's 800px) stack
-   panels instead of clipping them. */
-@media (max-width: 720px) {
-  .kiosk-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: repeat(4, minmax(180px, 1fr));
-    overflow-y: auto;
+/* Small screens (dev browser narrower than the kiosk's target size):
+   scale the whole card down rather than reflowing into a taller, scrolling
+   stack -- the dashboard stays one fixed, non-scrolling area no matter
+   the window size. */
+@media (max-width: 760px), (max-height: 560px) {
+  #root {
+    padding: 0;
   }
-  body {
-    overflow: auto;
+  .kiosk {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
   }
 }
