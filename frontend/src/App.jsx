@@ -1,23 +1,25 @@
 import { Fish, Navigation, Scale, Wind } from 'lucide-react'
 import { useClock } from './hooks/useClock.js'
-import { useSocket } from './hooks/useSocket.js'
+import { useLiveData } from './hooks/useLiveData.js'
 
 // Numbers-only dashboard: no gauges, sparklines, compass graphic, camera
 // feed, or connection/status badges -- just the current reading for each
-// sensor, plain and centered. Data still comes over the same /ws feed;
-// what changed is only how it's rendered. See README "Manual input" for
-// how to drive these numbers by hand (POST /manual) instead of the
-// simulator.
+// sensor, plain and centered. Data comes from useLiveData(), which is
+// either the real backend /ws feed or (VITE_DEMO_MODE=true, e.g. a
+// Vercel preview with no backend to talk to) a client-side simulated
+// walk -- see hooks/useLiveData.js and hooks/useMockData.js. See README
+// "Manual input" for how to drive real-mode numbers by hand (POST
+// /manual) instead of the hardware/simulate drivers.
 const fmt1 = (v) => (v != null ? Number(v).toFixed(1) : '—')
 const fmt2 = (v) => (v != null ? Number(v).toFixed(2) : '—')
 const fmt5 = (v) => (v != null ? Number(v).toFixed(5) : '—')
 const fmtInt = (v) => (v != null ? Math.round(v) : '—')
 
 export default function App() {
-  const { envelope } = useSocket()
+  const { data: liveData, demo } = useLiveData()
   const now = useClock()
 
-  const data = envelope.data || {}
+  const data = liveData || {}
   const gas = data.gas
   const load = data.load
   const gps = data.gps
@@ -35,6 +37,7 @@ export default function App() {
           </div>
         </div>
         <div className="kiosk-header-spacer" />
+        {demo && <div className="demo-note">Data simulasi</div>}
         <div className="clock">
           <div className="time mono">{now.toLocaleTimeString('id-ID', { hour12: false })}</div>
           <div className="date">{now.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' })}</div>

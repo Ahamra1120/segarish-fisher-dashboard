@@ -96,6 +96,45 @@ Force the LoRa retry path without hardware:
 `SIMULATE_FAIL_RATE=1.0 LORA_MODE=simulate python app.py` in `lora-uplink/`
 — rows will stay `pending` and keep retrying; drop the flag and they drain.
 
+## Demo deploy (Vercel, frontend-only, no backend)
+
+The real stack (`backend` + `sensor-service`) is not deployable to Vercel
+or any other serverless host — it depends on a persistent SQLite file,
+a long-lived WebSocket, and background hardware-polling threads,
+none of which fit a stateless function model. See "Everything runs on
+the Pi" at the top of this README — that's not a suggestion, the app is
+architecturally tied to a single always-on process.
+
+What *can* go on Vercel is just `frontend/`, running against
+**client-side simulated data** instead of a real backend — useful for
+sharing a visual preview (e.g. a competition demo link) with no Pi or
+backend needed. This is gated behind `VITE_DEMO_MODE`, a build-time env
+var (see `hooks/useLiveData.js` / `hooks/useMockData.js`): when true, the
+UI runs the same kind of mean-reverting random walk the sensor
+simulators use, entirely in the browser, and shows a small "Data
+simulasi" label in the header so it's never mistaken for a live feed.
+Leave it unset for the real Pi build (`npm run build` with no env var),
+which talks to backend's `/ws` exactly as before.
+
+**Steps:**
+1. On [vercel.com](https://vercel.com), **Add New → Project**, import
+   this repo from GitHub.
+2. **Root Directory**: set to `frontend` (this is a monorepo; Vercel
+   needs to know the Vite app isn't at the repo root).
+3. Framework preset should auto-detect as **Vite** (build command
+   `npm run build`, output directory `dist`) — leave as-is.
+4. **Environment Variables**: add `VITE_DEMO_MODE` = `true`.
+5. **Deploy**. Vercel builds on its own Linux infra, independent of
+   whatever's happening on your dev machine.
+
+To go back to hooking a preview up to a real backend instead of demo
+data, you'd need the backend reachable over the public internet (a
+tunnel, or hosting `backend`/`sensor-service` somewhere that supports
+persistent processes — Vercel still isn't that place) and would unset
+`VITE_DEMO_MODE` while pointing `SENSOR_SERVICE_URL`/the WS origin at
+that public backend URL — out of scope for this project's intended
+Pi-only deployment.
+
 ## Manual input (skip the simulator)
 
 For testing with exact, reproducible numbers instead of the simulator's
