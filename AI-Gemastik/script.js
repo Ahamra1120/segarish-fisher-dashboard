@@ -541,6 +541,12 @@ function connectIPCamera(url) {
   hideErrorBanner();
 
   const img = el.ipCameraStream;
+  // Request the stream with CORS so the frame can later be read back
+  // into a <canvas> for detection. If the camera server doesn't send
+  // Access-Control-Allow-Origin, this makes the load fail immediately
+  // and honestly (onerror below) instead of loading fine and only
+  // failing later, silently, when we try to capture a frame.
+  img.crossOrigin = "anonymous";
 
   const onLoad = () => {
     state.naturalW = img.naturalWidth;
@@ -562,7 +568,7 @@ function connectIPCamera(url) {
     stopContinuousLoop();
     showError(
       "Can't reach this IP camera.",
-      "Check the URL, camera availability, stream format, CORS settings, and network connection."
+      "Check the URL, camera availability, and stream format. If the camera loaded before but not now, its server likely doesn't send CORS headers (Access-Control-Allow-Origin) — required so frames can be captured for detection."
     );
   };
 
@@ -588,11 +594,14 @@ async function runIpDetectionCycle() {
     try {
       base64 = canvasToBase64Jpeg(canvas, 0.75);
     } catch (secErr) {
-      // Tainted canvas: cross-origin stream without CORS headers.
+      // Tainted canvas: the stream is displaying fine, but its server
+      // doesn't send CORS headers, so we're not allowed to read pixel
+      // data from it for detection.
+      setStatus("Offline", "error");
       stopContinuousLoop();
       showError(
-        "Can't reach this IP camera.",
-        "Check the URL, camera availability, stream format, CORS settings, and network connection."
+        "Can't analyze this camera's stream.",
+        "The video is loading, but its server doesn't send CORS headers (Access-Control-Allow-Origin), so frames can't be captured for detection. This has to be enabled on the camera/server side."
       );
       return;
     }
