@@ -95,14 +95,8 @@ button, input { font-family: inherit; }
   z-index: 30;
 }
 
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand-logo { display: block; height: 28px; width: auto; }
-.brand-title {
-  font-weight: 600;
-  font-size: var(--fs-title);
-  letter-spacing: 0.01em;
-  color: var(--text);
-}
+.brand { display: flex; align-items: center; }
+.brand-logo { display: block; height: 40px; width: auto; }
 
 .status-chip {
   display: flex;
