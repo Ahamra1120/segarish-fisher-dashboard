@@ -1,4 +1,4 @@
-import { Fish, Navigation, Scale, Wind } from 'lucide-react'
+import { Navigation, Scale, Wind } from 'lucide-react'
 import { useClock } from './hooks/useClock.js'
 import { useLiveData } from './hooks/useLiveData.js'
 
@@ -28,13 +28,8 @@ export default function App() {
     <div className="kiosk">
       <header className="kiosk-header">
         <div className="brand-mark">
-          <div className="brand-logo">
-            <Fish size={18} />
-          </div>
-          <div>
-            <div className="brand-name">SEGARISH</div>
-            <div className="brand-sub">Fisher Dashboard</div>
-          </div>
+          <img src="/landscape-logo-SEGARFISH.png" alt="SEGARFISH" className="brand-mark-img" />
+          <div className="brand-sub">Fisher Dashboard</div>
         </div>
         <div className="kiosk-header-spacer" />
         {demo && <div className="demo-note">Data simulasi</div>}

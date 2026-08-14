@@ -1,5 +1,5 @@
 [Unit]
-Description=Segarish Fisher Dashboard - sensor-service
+Description=Segarfish Fisher Dashboard - sensor-service
 After=network.target
 Wants=network.target
 

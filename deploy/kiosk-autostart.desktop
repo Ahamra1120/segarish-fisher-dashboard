@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=Segarish Fisher Dashboard Kiosk
+Name=Segarfish Fisher Dashboard Kiosk
 Comment=Launches the fisher dashboard in Chromium kiosk mode on boot
 Exec=/home/pi/segarish-fisher-dashboard/deploy/kiosk.sh
 X-GNOME-Autostart-enabled=true

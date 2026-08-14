@@ -1,5 +1,5 @@
 [Unit]
-Description=Segarish Fisher Dashboard - backend
+Description=Segarfish Fisher Dashboard - backend
 After=network.target sensor-service.service
 Wants=network.target
 # Deliberately "Wants", not "Requires"/"BindsTo": the backend must keep

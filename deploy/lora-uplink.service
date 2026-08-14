@@ -1,5 +1,5 @@
 [Unit]
-Description=Segarish Fisher Dashboard - lora-uplink
+Description=Segarfish Fisher Dashboard - lora-uplink
 After=network.target sensor-service.service
 Wants=network.target
 # Also "Wants" not "Requires": lora-uplink only reads/writes the shared

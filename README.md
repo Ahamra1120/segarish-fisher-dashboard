@@ -1,4 +1,4 @@
-# Segarish Fisher Dashboard
+# Segarfish Fisher Dashboard
 
 On-device dashboard for a fishing vessel: MQ135 (air/gas quality), a load
 cell, GPS, and an IMX135 camera feed into a Raspberry Pi, shown live on a
