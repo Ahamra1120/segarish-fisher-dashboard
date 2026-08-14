@@ -96,7 +96,6 @@ const state = {
   minConfidencePct: 40,
   mediaStream: null,
   ipRetryUrl: "",
-  ipDetectionDisabled: false, // true when the IP stream loaded without CORS, so frames can't be captured
 };
 
 /* ===========================================================
@@ -563,7 +562,7 @@ function connectIPCamera(url) {
     stopContinuousLoop();
     showError(
       "Can't reach this IP camera.",
-      "Check the URL, camera availability, and stream format, and that the device is reachable on this network."
+      "Check the URL, camera availability, stream format, CORS settings, and network connection."
     );
   };
 
@@ -589,14 +588,11 @@ async function runIpDetectionCycle() {
     try {
       base64 = canvasToBase64Jpeg(canvas, 0.75);
     } catch (secErr) {
-      // Tainted canvas: the stream is displaying fine, but its server
-      // doesn't send CORS headers, so we're not allowed to read pixel
-      // data from it for detection.
-      setStatus("Offline", "error");
+      // Tainted canvas: cross-origin stream without CORS headers.
       stopContinuousLoop();
       showError(
-        "Can't analyze this camera's stream.",
-        "The video is loading, but its server doesn't send CORS headers (Access-Control-Allow-Origin), so frames can't be captured for detection. This has to be enabled on the camera/server side."
+        "Can't reach this IP camera.",
+        "Check the URL, camera availability, stream format, CORS settings, and network connection."
       );
       return;
     }

@@ -49,14 +49,6 @@
 
 * { box-sizing: border-box; }
 
-/* The `hidden` attribute must always win over component display rules
-   (.chip, .viewer, .error-banner, etc. all set their own display: flex/
-   inline-flex, which otherwise overrides the browser's default
-   [hidden]{display:none} since author styles beat UA styles). Without
-   this, toggling `el.hidden = true` in JS silently does nothing for any
-   element whose class sets its own display. */
-[hidden] { display: none !important; }
-
 html, body {
   height: 100%;
   margin: 0;
@@ -227,6 +219,10 @@ button, input { font-family: inherit; }
   max-width: 100%;
   object-fit: contain;
   display: block;
+}
+
+.media-el[hidden] {
+  display: none;
 }
 
 /* If a media element ever has no valid image loaded, suppress the
