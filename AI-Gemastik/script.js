@@ -96,6 +96,7 @@ const state = {
   minConfidencePct: 40,
   mediaStream: null,
   ipRetryUrl: "",
+  ipDetectionDisabled: false, // true when the IP stream loaded without CORS, so frames can't be captured
 };
 
 /* ===========================================================
@@ -541,39 +542,57 @@ function connectIPCamera(url) {
   hideErrorBanner();
 
   const img = el.ipCameraStream;
-  // Request the stream with CORS so the frame can later be read back
-  // into a <canvas> for detection. If the camera server doesn't send
-  // Access-Control-Allow-Origin, this makes the load fail immediately
-  // and honestly (onerror below) instead of loading fine and only
-  // failing later, silently, when we try to capture a frame.
-  img.crossOrigin = "anonymous";
 
   const onLoad = () => {
     state.naturalW = img.naturalWidth;
     state.naturalH = img.naturalHeight;
     setStatus("Live", "live");
-    setDetectingChip(true);
     show(img);
     hide(el.imagePreview);
     hide(el.deviceVideo);
     hide(el.ipBar);
 
+    if (state.ipDetectionDisabled) {
+      // Stream loaded, but only without CORS — we can display it but
+      // can't read its pixels into a canvas, so detection can't run.
+      setDetectingChip(false);
+      showError(
+        "Live view connected — detection unavailable.",
+        "This camera's server doesn't send CORS headers (Access-Control-Allow-Origin), so frames can't be captured for AI detection. The video stream itself works fine."
+      );
+      return;
+    }
+
+    setDetectingChip(true);
     if (!state.loopTimer) {
       state.loopTimer = setInterval(runIpDetectionCycle, state.detectionIntervalMs);
     }
   };
 
-  const onError = () => {
+  const onCorsFail = () => {
+    // The CORS-mode request failed — most likely the server just
+    // doesn't send Access-Control-Allow-Origin at all (common for
+    // simple MJPEG servers). Fall back to a plain, non-CORS load so
+    // the live view still works, even though detection won't.
+    state.ipDetectionDisabled = true;
+    img.onerror = onFinalError;
+    img.crossOrigin = null;
+    img.src = url;
+  };
+
+  const onFinalError = () => {
     setStatus("Offline", "error");
     stopContinuousLoop();
     showError(
       "Can't reach this IP camera.",
-      "Check the URL, camera availability, and stream format. If the camera loaded before but not now, its server likely doesn't send CORS headers (Access-Control-Allow-Origin) — required so frames can be captured for detection."
+      "Check the URL, camera availability, and stream format, and that the device is reachable on this network."
     );
   };
 
+  state.ipDetectionDisabled = false;
   img.onload = onLoad;
-  img.onerror = onError;
+  img.onerror = onCorsFail;
+  img.crossOrigin = "anonymous";
   img.src = url;
 }
 
