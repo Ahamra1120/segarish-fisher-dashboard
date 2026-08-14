@@ -80,6 +80,16 @@ button, input { font-family: inherit; }
   width: 100vw;
   display: flex;
   flex-direction: column;
+  background: var(--bg);
+}
+
+/* Fullscreen: vw/vh can under/overshoot the real screen box in some
+   browsers, leaving the black fullscreen backdrop visible at the edges.
+   Pin to the fullscreened element's own box instead. */
+.app:fullscreen,
+.app:-webkit-full-screen {
+  height: 100%;
+  width: 100%;
 }
 
 /* ===========================================================
@@ -150,9 +160,11 @@ button, input { font-family: inherit; }
 
 .empty-icon {
   display: inline-flex;
+  justify-content: center;
   color: var(--text-dim);
   margin-bottom: var(--space-4);
 }
+.empty-icon img { display: block; }
 
 .empty-inner h1 {
   font-size: 18px;
@@ -349,6 +361,127 @@ button, input { font-family: inherit; }
 }
 .error-title { font-size: var(--fs-body); font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .error-desc  { font-size: var(--fs-meta); color: var(--text-dim); margin-bottom: var(--space-3); line-height: 1.5; }
+
+/* ===========================================================
+   WEIGHING SIMULATION (blocking modal — spans the whole process,
+   from scanning through the settled reading, not just the final OK)
+   =========================================================== */
+.weigh-card {
+  width: min(340px, 100%);
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  animation: modal-pop-in 0.18s var(--ease);
+}
+
+.weigh-scan {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weigh-ping {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  animation: weigh-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+.weigh-ping-2 { animation-delay: 0.6s; }
+
+.weigh-scan.is-settled .weigh-ping { animation-play-state: paused; opacity: 0; }
+
+@keyframes weigh-ping {
+  0%   { transform: scale(0.55); opacity: 0.9; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+.weigh-check-icon {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.weigh-status { font-size: var(--fs-body); color: var(--text-dim); margin: 0 0 var(--space-4); }
+
+.weigh-label {
+  font-size: var(--fs-body);
+  color: var(--text-dim);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+.weigh-label strong { color: var(--text); font-weight: 600; }
+
+.weigh-value {
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 var(--space-4);
+}
+.weigh-unit { font-size: var(--fs-body); color: var(--text-dim); font-weight: 500; }
+
+.weigh-ok-btn { width: 100%; padding: 11px 15px; font-size: var(--fs-body); }
+
+/* ===========================================================
+   SAVE CONFIRMATION MODAL
+   =========================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8,12,16,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: var(--space-4);
+  animation: modal-fade-in 0.15s var(--ease);
+}
+.modal-overlay[hidden] { display: none; }
+@keyframes modal-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-card {
+  width: min(340px, 100%);
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  animation: modal-pop-in 0.18s var(--ease);
+}
+@keyframes modal-pop-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px; height: 52px;
+  margin: 0 auto var(--space-4);
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: var(--accent-strong);
+}
+.modal-title { font-size: 17px; font-weight: 600; color: var(--text); margin: 0 0 8px; }
+.modal-desc  { font-size: var(--fs-body); color: var(--text-dim); margin: 0 0 var(--space-4); line-height: 1.5; }
 
 /* ===========================================================
    IP CAMERA INLINE ENTRY

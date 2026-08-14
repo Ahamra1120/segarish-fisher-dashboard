@@ -79,6 +79,16 @@ const el = {
   captureCanvas: document.getElementById("captureCanvas"),
   app: document.getElementById("app"),
   stage: document.getElementById("stage"),
+
+  weighOverlay: document.getElementById("weighOverlay"),
+  weighScan: document.getElementById("weighScan"),
+  weighStatus: document.getElementById("weighStatus"),
+  weighFishName: document.getElementById("weighFishName"),
+  weighValueNum: document.getElementById("weighValueNum"),
+  weighOkBtn: document.getElementById("weighOkBtn"),
+
+  saveModal: document.getElementById("saveModal"),
+  saveModalOkBtn: document.getElementById("saveModalOkBtn"),
 };
 
 /* ===========================================================
@@ -96,6 +106,10 @@ const state = {
   minConfidencePct: 40,
   mediaStream: null,
   ipRetryUrl: "",
+
+  weighTriggered: false,   // fires once per source session, on first non-empty detection
+  weighRevealTimer: null,
+  weighSettleTimer: null,
 };
 
 /* ===========================================================
@@ -123,6 +137,7 @@ function resetToIdle() {
   hide(el.detectionPanel);
   hide(el.settingsPanel);
   hide(el.ipBar);
+  resetWeighSimulation();
   setStatus("Idle", "idle");
   setSourceSelection(null);
 }
@@ -267,7 +282,64 @@ function renderDetections(predictions) {
   drawBoundingBoxes();
   updateDetectionCount(predictions.length);
   updateDetectionPanel(predictions);
+
+  if (predictions.length > 0 && !state.weighTriggered) {
+    state.weighTriggered = true;
+    state.weighRevealTimer = setTimeout(openWeighModal, 5000);
+  }
 }
+
+/* ===========================================================
+   WEIGHING SIMULATION
+   Fires once per source session on the first non-empty detection:
+   detecting keeps running silently for 5s, then the popup opens
+   showing the scanning state, and settles to the reading a few
+   seconds later. Purely a visual simulation — no real scale
+   hardware involved.
+   =========================================================== */
+
+const SIMULATED_WEIGHT_KG = 0.242;
+
+function resetWeighSimulation() {
+  clearTimeout(state.weighRevealTimer);
+  clearTimeout(state.weighSettleTimer);
+  state.weighRevealTimer = null;
+  state.weighSettleTimer = null;
+  state.weighTriggered = false;
+  hide(el.weighOverlay);
+  hide(el.saveModal);
+  el.weighScan.classList.remove("is-settled");
+  el.weighStatus.textContent = "Menimbang ikan…";
+  el.weighValueNum.textContent = "--";
+  el.weighOkBtn.disabled = true;
+}
+
+function openWeighModal() {
+  el.weighFishName.textContent = `"${DISPLAY_LABEL}"`;
+  el.weighScan.classList.remove("is-settled");
+  el.weighStatus.textContent = "Menimbang ikan…";
+  el.weighValueNum.textContent = "--";
+  el.weighOkBtn.disabled = true;
+  show(el.weighOverlay);
+
+  state.weighSettleTimer = setTimeout(settleWeighReading, 3000);
+}
+
+function settleWeighReading() {
+  el.weighValueNum.textContent = SIMULATED_WEIGHT_KG.toFixed(3);
+  el.weighStatus.textContent = "Selesai ditimbang";
+  el.weighScan.classList.add("is-settled");
+  el.weighOkBtn.disabled = false;
+}
+
+el.weighOkBtn.addEventListener("click", () => {
+  hide(el.weighOverlay);
+  show(el.saveModal);
+});
+
+el.saveModalOkBtn.addEventListener("click", () => {
+  hide(el.saveModal);
+});
 
 /* ===========================================================
    DETECTION PANEL
@@ -356,6 +428,7 @@ function stopAllSources() {
   setAnalyzing(false);
   setDetectingChip(false);
   hide(el.ipBar);
+  resetWeighSimulation();
 }
 
 function stopContinuousLoop() {

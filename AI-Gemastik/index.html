@@ -32,10 +32,7 @@
     <section class="empty-state" id="emptyState">
       <div class="empty-inner">
         <span class="empty-icon" aria-hidden="true">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 12C6 7 10 5 14 5C18 5 20.5 8 21.5 12C20.5 16 18 19 14 19C10 19 6 17 3 12Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-            <path d="M14 5L17 2M14 19L17 22" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-          </svg>
+          <img src="segarfish-mark.png" alt="" width="56" height="56">
         </span>
         <h1>No camera source selected</h1>
         <p>Start the device camera, or use an image or IP stream instead.</p>
@@ -169,6 +166,35 @@
 
   <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden>
   <canvas id="captureCanvas" hidden></canvas>
+
+  <!-- Weighing simulation modal (blocks the whole screen for the entire measuring process) -->
+  <div class="modal-overlay" id="weighOverlay" hidden>
+    <div class="weigh-card" id="weighCard" role="status" aria-live="polite">
+      <div class="weigh-scan" id="weighScan">
+        <span class="weigh-ping"></span>
+        <span class="weigh-ping weigh-ping-2"></span>
+        <span class="weigh-check-icon">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </div>
+      <p class="weigh-status" id="weighStatus">Menimbang ikan…</p>
+      <p class="weigh-label" id="weighLabel">Berat <strong id="weighFishName">"Ikan Sebelah"</strong> adalah:</p>
+      <p class="weigh-value"><span id="weighValueNum">--</span> <span class="weigh-unit">kg</span></p>
+      <button class="btn btn-primary btn-small weigh-ok-btn" id="weighOkBtn" type="button" disabled>OK</button>
+    </div>
+  </div>
+
+  <!-- Save confirmation modal -->
+  <div class="modal-overlay" id="saveModal" hidden>
+    <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="saveModalTitle">
+      <span class="modal-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="30" height="30"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <h2 class="modal-title" id="saveModalTitle">Data sudah tersimpan dan terkirim</h2>
+      <p class="modal-desc" id="saveModalDesc">Berat hasil timbangan telah dicatat.</p>
+      <button class="btn btn-primary btn-small" id="saveModalOkBtn" type="button">OK</button>
+    </div>
+  </div>
 </div>
 
 <script src="script.js"></script>
