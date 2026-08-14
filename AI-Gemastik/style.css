@@ -96,7 +96,7 @@ button, input { font-family: inherit; }
 }
 
 .brand { display: flex; align-items: center; }
-.brand-logo { display: block; height: 40px; width: auto; }
+.brand-logo { display: block; height: 64px; width: auto; }
 
 .status-chip {
   display: flex;
@@ -219,6 +219,19 @@ button, input { font-family: inherit; }
   max-width: 100%;
   object-fit: contain;
   display: block;
+}
+
+.media-el[hidden] {
+  display: none;
+}
+
+/* If a media element ever has no valid image loaded, suppress the
+   browser's default broken-image icon + alt text instead of letting
+   it leak through as the visual fallback. */
+.media-el:not([src]),
+.media-el[src=""] {
+  color: transparent;
+  font-size: 0;
 }
 
 .overlay-canvas {
