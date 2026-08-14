@@ -11,7 +11,7 @@
 const ROBOFLOW_ENDPOINT =
   "https://serverless.roboflow.com/detection-fish-6asg4/14?api_key=hqILBoYsSgXJo7OxGRSv";
 
-const DISPLAY_LABEL = "Ikan Bandeng";
+const DISPLAY_LABEL = "Ikan Sebelah";
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const REQUEST_TIMEOUT_MS = 12000;
 
@@ -568,6 +568,7 @@ function connectIPCamera(url) {
 
   img.onload = onLoad;
   img.onerror = onError;
+  img.crossOrigin = "anonymous";
   img.src = url;
 }
 
@@ -591,8 +592,8 @@ async function runIpDetectionCycle() {
       // Tainted canvas: cross-origin stream without CORS headers.
       stopContinuousLoop();
       showError(
-        "Can't reach this IP camera.",
-        "Check the URL, camera availability, stream format, CORS settings, and network connection."
+        "Stream loaded, but frames are blocked by CORS.",
+        "The camera server needs to send an Access-Control-Allow-Origin header so frames can be read for detection."
       );
       return;
     }
